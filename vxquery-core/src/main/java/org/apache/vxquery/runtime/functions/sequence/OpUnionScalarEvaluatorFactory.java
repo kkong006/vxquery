@@ -95,7 +95,8 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
                             // Is only one item
                             int nodeId = FunctionHelper.getLocalNodeId(tvp1, tpleft);
                             if (nodeId == -1) {
-                                //TODO
+                                //TODO: create sets of tvp and ids and then compare them both
+                                
                             }
                             arg1_nodes.put(nodeId, tvp1);
                             sb.addItem(tvp1);
@@ -154,6 +155,8 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
                             }
                         }
                     }
+                    
+                    // TODO: make sure this works on collections
                     
                     sb.finish();
                     result.set(abvs);
