@@ -61,7 +61,7 @@ public class OpIntersectScalarEvaluatorFactory extends AbstractTaggedValueArgume
         final TypedPointables tpright = new TypedPointables();
 
         Map<Integer, TaggedValuePointable> nodes = new HashMap<Integer, TaggedValuePointable>();
-
+            
         return new AbstractTaggedValueArgumentScalarEvaluator(args) {
             @Override
             protected void evaluate(TaggedValuePointable[] args, IPointable result) throws SystemException {

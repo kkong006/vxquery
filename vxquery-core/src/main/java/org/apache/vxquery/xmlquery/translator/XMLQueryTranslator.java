@@ -1545,9 +1545,9 @@ public class XMLQueryTranslator {
         }
         */
         ILogicalExpression result = sfce(operator, arg1, arg2);
-        if (BuiltinOperators.UNION.equals(operator)) {
-            result = sfce(BuiltinOperators.SORT_DISTINCT_NODES_ASC, result);
-        }
+//        if (BuiltinOperators.UNION.equals(operator)) {
+//            result = sfce(BuiltinOperators.SORT_DISTINCT_NODES_ASC, result);
+//        }
         LogicalVariable lVar = createAssignment(result, tCtx);
         return lVar;
     }
