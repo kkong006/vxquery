@@ -56,7 +56,7 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
     private static final long serialVersionUID = 1L;
 
     public OpUnionScalarEvaluatorFactory(IScalarEvaluatorFactory[] args) {
-        super(args);  
+        super(args);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
             throws HyracksDataException {
         final ArrayBackedValueStorage abvs = new ArrayBackedValueStorage();
         final SequenceBuilder sb = new SequenceBuilder();
-       
+
         final SequencePointable seqleft = (SequencePointable) SequencePointable.FACTORY.createPointable();
         final SequencePointable seqright = (SequencePointable) SequencePointable.FACTORY.createPointable();
         final TaggedValuePointable tvpleft = (TaggedValuePointable) TaggedValuePointable.FACTORY.createPointable();
