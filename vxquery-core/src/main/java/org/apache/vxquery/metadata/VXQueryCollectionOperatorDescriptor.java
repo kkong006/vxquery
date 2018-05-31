@@ -112,6 +112,7 @@ public class VXQueryCollectionOperatorDescriptor extends AbstractSingleActivityO
         final DynamicContext dCtx = (DynamicContext) ctx.getJobletContext().getGlobalJobData();
         final ArrayBackedValueStorage jsonAbvs = new ArrayBackedValueStorage();
         final String collectionName = collectionPartitions[partition % collectionPartitions.length];
+        // TODO: Change nodeIdProvider
         final XMLParser parser = new XMLParser(false, nodeIdProvider, nodeId, appender, childSeq,
                 dCtx.getStaticContext());
         final JSONParser jparser = new JSONParser(valueSeq);

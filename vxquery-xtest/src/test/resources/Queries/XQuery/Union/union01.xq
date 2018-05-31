@@ -15,5 +15,4 @@
    specific language governing permissions and limitations
    under the License. :)
 let $a := <a>5</a> union <a>6</a>
-let $b := $a
-return $a union $b
+return $a

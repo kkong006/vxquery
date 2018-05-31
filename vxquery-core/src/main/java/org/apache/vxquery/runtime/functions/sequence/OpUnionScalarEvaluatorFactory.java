@@ -50,6 +50,7 @@ import org.apache.vxquery.runtime.functions.comparison.AbstractValueComparisonOp
 import org.apache.vxquery.runtime.functions.comparison.ValueEqComparisonOperation;
 import org.apache.vxquery.runtime.functions.comparison.general.AbstractGeneralComparisonScalarEvaluatorFactory;
 import org.apache.vxquery.runtime.functions.comparison.general.GeneralEqComparisonScalarEvaluatorFactory;
+import org.apache.vxquery.runtime.functions.sequence.OpIntersectScalarEvaluatorFactory.Pair;
 import org.apache.vxquery.runtime.functions.util.FunctionHelper;
 
 public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentScalarEvaluatorFactory {
@@ -76,6 +77,11 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
         Map<Integer, TaggedValuePointable> arg1_nodes = new HashMap<Integer, TaggedValuePointable>();
         Set<ByteBuffer> arg1_bytes = new HashSet<ByteBuffer>();
         Set<Integer> arg1_tags = new HashSet<Integer>();
+        
+        // a set of unique root node ids and local node ids
+        //Set<Pair> nodes = new HashSet<Pair>();
+        //Set<Integer> local_ids = new HashSet<Integer>();
+        HashMap<Integer,  HashSet<Integer>> ids = new HashMap<Integer, HashSet<Integer>>();
         
         return new AbstractTaggedValueArgumentScalarEvaluator(args) {            
             @Override
