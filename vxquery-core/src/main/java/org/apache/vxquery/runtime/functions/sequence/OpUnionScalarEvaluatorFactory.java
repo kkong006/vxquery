@@ -55,6 +55,8 @@ import org.apache.vxquery.runtime.functions.util.FunctionHelper;
 
 public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentScalarEvaluatorFactory {
     private static final long serialVersionUID = 1L;
+    
+    private final static boolean hashBytes = false;
 
     public OpUnionScalarEvaluatorFactory(IScalarEvaluatorFactory[] args) {
         super(args);
@@ -78,10 +80,8 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
         Set<ByteBuffer> arg1_bytes = new HashSet<ByteBuffer>();
         Set<Integer> arg1_tags = new HashSet<Integer>();
         
-        // a set of unique root node ids and local node ids
-        //Set<Pair> nodes = new HashSet<Pair>();
-        //Set<Integer> local_ids = new HashSet<Integer>();
-        HashMap<Integer,  HashSet<Integer>> ids = new HashMap<Integer, HashSet<Integer>>();
+        // Hash file id to a set of node ids
+        HashMap<Integer,  HashSet<Integer>> node_ids = new HashMap<Integer, HashSet<Integer>>();
         
         return new AbstractTaggedValueArgumentScalarEvaluator(args) {            
             @Override
@@ -98,69 +98,81 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
                     
                     // If an operand has one item then it is a node tree
                     // If an operand has more than one item then it is a sequence
+                    // If an operand has 0 items then it is an empty sequence
                     
-
                     // Add items from the left operand into the hash map
                     if(tvp1.getTag() == ValueTag.SEQUENCE_TAG) {
                         // Is a sequence, so add all the items
                         tvp1.getValue(seqleft);
-                        int seqleftlen = seqleft.getEntryCount();
-                        for (int i = 0; i < seqleftlen; ++i) {
+                        for (int i = 0; i < seqleft.getEntryCount(); ++i) {
                             seqleft.getEntry(i, tvpleft);
                             if (tvpleft.getTag() != ValueTag.NODE_TREE_TAG) {
                                 throw new SystemException(ErrorCode.XPTY0004);
                             }
-                            int nodeId = FunctionHelper.getLocalNodeId(tvpleft, tpleft);
-                            if (nodeId != -1) {
-                                arg1_tags.add(nodeId);
-                            }
-                            tvpleft.getValue(temp);
-                            arg1_bytes.add(ByteBuffer.wrap(temp.getByteArray()));
-                            arg1_nodes.put(nodeId, tvpleft);
-                            sb.addItem(tvpleft);
+                            if(hashBytes) {
+                                // TODO: Replace byte hashing with fileID
+                                int nodeId = FunctionHelper.getLocalNodeId(tvpleft, tpleft);
+                                if (nodeId != -1) {
+                                    arg1_tags.add(nodeId);
+                                }
+                                tvpleft.getValue(temp);
+                                arg1_bytes.add(ByteBuffer.wrap(temp.getByteArray()));
+                                arg1_nodes.put(nodeId, tvpleft);
+                                sb.addItem(tvpleft);
+                            } else {
+                                if(!addItem(tvpleft, tpleft, node_ids)) {
+                                    // TODO: Local node id is -1
+                                }
+                                sb.addItem(tvpleft);
+                            }                            
                         }
                     } else {
-                        if(tvp1.getTag() != ValueTag.NODE_TREE_TAG) {
-                            System.out.println("Not a Sequence: " + tvp1.getTag());
-                            throw new SystemException(ErrorCode.FORG0006);
-                        }
-                        int nodeId = FunctionHelper.getLocalNodeId(tvp1, tpleft);
-                        if(nodeId != -1) {
-                            arg1_tags.add(nodeId);
-                        }
-                        tvp1.getValue(temp);
-                        arg1_bytes.add(ByteBuffer.wrap(temp.getByteArray()));
-                        arg1_nodes.put(nodeId, tvp1);
-                        sb.addItem(tvp1);   
+                        if(hashBytes) {
+                            // TODO: Replace byte hashing with fileID
+                            int nodeId = FunctionHelper.getLocalNodeId(tvp1, tpleft);
+                            if(nodeId != -1) {
+                                arg1_tags.add(nodeId);
+                            }
+                            tvp1.getValue(temp);
+                            arg1_bytes.add(ByteBuffer.wrap(temp.getByteArray()));
+                            arg1_nodes.put(nodeId, tvp1);
+                            sb.addItem(tvp1);  
+                        } else {
+                            if(!addItem(tvp1, tpleft, node_ids)) {
+                                // TODO: Local node id is -1
+                            }
+                            sb.addItem(tvp1); 
+                        }                         
                     }
                     
                     // Check if node IDs from right operand is in the hash map
                     if(tvp2.getTag() == ValueTag.SEQUENCE_TAG) {
-                        tvp2.getValue(seqright);    
-                        int seqrightlen = seqright.getEntryCount();
-                        for (int i = 0; i < seqrightlen; ++i) {
+                        tvp2.getValue(seqright);
+                        for (int i = 0; i < seqright.getEntryCount(); ++i) {
                             seqright.getEntry(i, tvpright);
                             if (tvpright.getTag() != ValueTag.NODE_TREE_TAG) {
                                 throw new SystemException(ErrorCode.XPTY0004);
                             }
-                            int nodeId = FunctionHelper.getLocalNodeId(tvpright, tpright);
-                            if (nodeId != -1) {
-                                if(!arg1_tags.contains(nodeId)) {
-                                    sb.addItem(tvpright);
+                            if(hashBytes) {
+                                int nodeId = FunctionHelper.getLocalNodeId(tvpright, tpright);
+                                if (nodeId != -1) {
+                                    if(!arg1_tags.contains(nodeId)) {
+                                        sb.addItem(tvpright);
+                                    }
+                                } else {
+                                    tvpright.getValue(temp);
+                                    if(!arg1_bytes.contains(ByteBuffer.wrap(temp.getByteArray()))) {
+                                        sb.addItem(tvpright);
+                                    }
                                 }
                             } else {
-                                tvpright.getValue(temp);
-                                if(!arg1_bytes.contains(ByteBuffer.wrap(temp.getByteArray()))) {
+                                if(!checkItem(tvpright, tpright, node_ids)) {
                                     sb.addItem(tvpright);
                                 }
                             }
                         }
                     } else {
-                        if (tvp2.getTag() != ValueTag.NODE_TREE_TAG) {
-                            System.out.println("Not a Sequence: " + tvp2.getTag());
-                            throw new SystemException(ErrorCode.FORG0006);
-                        }
-                        else {
+                        if(hashBytes) {
                             // Is only one item
                             int nodeId = FunctionHelper.getLocalNodeId(tvp2, tpright);
                             if (nodeId != -1) {
@@ -173,11 +185,13 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
                                     sb.addItem(tvp2);
                                 }
                             }
+                        } else {
+                            if(!checkItem(tvp2, tpright, node_ids)) {
+                                sb.addItem(tvp2);
+                            }
                         }
-                    }
-                    
+                    }                    
                     // TODO: make sure this works on collections
-
                     sb.finish();
                     result.set(abvs);
                 } catch (IOException e) {
@@ -189,5 +203,53 @@ public class OpUnionScalarEvaluatorFactory extends AbstractTaggedValueArgumentSc
     
     private boolean isSequenceNode(byte tvpTag) {
         return (tvpTag == ValueTag.SEQUENCE_TAG) || (tvpTag == ValueTag.NODE_TREE_TAG);
+    }
+    
+    /*
+     * Adds item to nodes (hash map)
+     * Returns: False if local node id doesn't exist
+     *          True if item added successfully
+     */
+    private boolean addItem(TaggedValuePointable tvp, TypedPointables tp, HashMap<Integer,  HashSet<Integer>> node_ids) {
+        int nodeId = FunctionHelper.getLocalNodeId(tvp, tp);
+        int rootNodeId = tp.ntp.getRootNodeId();
+        int fileId = (byte) (rootNodeId >> 24); // TODO: Magic number
+        if (nodeId == -1) {
+            // TODO
+            return false;
+        } else if (rootNodeId == -1) {
+            // TODO
+            return false;
+        }
+        
+        if(!node_ids.containsKey(fileId)) {
+            node_ids.put(fileId, new HashSet<Integer>());
+        }
+        node_ids.get(fileId).add(nodeId);
+        return true;
+    }
+    
+    /*
+     * Checks if node is in hash map
+     * Returns: False if local node id doesn't exist
+     *          False if node isn't in hash map
+     *          True if node is in hash map
+     */
+    private boolean checkItem(TaggedValuePointable tvp, TypedPointables tp, HashMap<Integer,  HashSet<Integer>> node_ids) {
+        int nodeId = FunctionHelper.getLocalNodeId(tvp, tp);
+        int rootNodeId = tp.ntp.getRootNodeId();
+        int fileId = (byte) (rootNodeId >> 24); // TODO: Magic number
+        if (nodeId == -1) {
+            // TODO
+            return false;
+        } else if (rootNodeId == -1) {
+            // TODO
+            return false;
+        }
+        
+        if (node_ids.containsKey(fileId) && node_ids.get(fileId).contains(nodeId)) {
+            return true;
+        }
+        return false;
     }
 }
