@@ -14,8 +14,7 @@
    KIND, either express or implied.  See the License for the
    specific language governing permissions and limitations
    under the License. :)
-   
-let $c := "catalog"
-let $a := doc($c)/catalog/book[price<50]
-let $b := doc($c)/catalog/book[price<40]
+
+let $a := <a>5</a> union <a>6</a>
+let $b = $a
 return $a union $b

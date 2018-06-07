@@ -14,7 +14,8 @@
    KIND, either express or implied.  See the License for the
    specific language governing permissions and limitations
    under the License. :)
-
-let $a := doc("src/test/resources/TestSources/xml/catalog.xml")/catalog/book[price<50]
-let $b := doc("src/test/resources/TestSources/xml/catalog.xml")/catalog/book[price<40]
+   
+let $c := "catalog"
+let $a := doc($c)/catalog/book[price<25]
+let $b := doc($c)/catalog/book[price<50]
 return $a union $b
